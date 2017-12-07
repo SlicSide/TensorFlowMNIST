@@ -1,6 +1,9 @@
 # Import TensorFlow-Library
 import tensorflow as tf
 
+# Import DateTime for recording training time
+from datetime import datetime
+
 # Import MNIST DATA
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -42,7 +45,7 @@ with tf.name_scope("train") as scope:
     optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost_function)
 
 # Initializing variables
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 
 # Merge all summaries into a single operator
 merged_summary_op = tf.summary.merge_all()
@@ -54,6 +57,9 @@ with tf.Session() as sess:
     # Setting the logs writer to the folder /tmp/tensorflow_logs
     summary_writer = tf.summary.FileWriter('C:\TensorFlow\logs', sess.graph)
 
+    # Setting time before training
+    timeBeforeTraining = datetime.now()
+
     # Training cycle
     for iteration in range(training_iteration):
         avg_cost = 0.
@@ -64,7 +70,7 @@ with tf.Session() as sess:
             # Fit training using batch data
             sess.run(optimizer, feed_dict={x: batch_xs, y: batch_ys})
             # Computing the average loss
-            avg_cost = sess.run(cost_function, feed_dict={x: batch_xs, y: batch_ys})/total_batch
+            avg_cost += sess.run(cost_function, feed_dict={x: batch_xs, y: batch_ys})/total_batch
             # Writing logs for each iteration
             summary_str = sess.run(merged_summary_op, feed_dict={x: batch_xs, y: batch_ys})
             summary_writer.add_summary(summary_str, iteration*total_batch + i)
@@ -72,7 +78,12 @@ with tf.Session() as sess:
         if iteration % display_step == 0:
             print("Iteration:", '%04d' % (iteration + 1), "cost=", "{:.9f}".format(avg_cost))
 
+    # Setting time after Training and calculate the difference
+    timeAfterTraining = datetime.now()
+    timeDelta = timeAfterTraining - timeBeforeTraining
+
     print("Tuning completed!")
+    print("It took the network this time to train:", timeDelta)
 
     # Testing the model
     predictions = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
